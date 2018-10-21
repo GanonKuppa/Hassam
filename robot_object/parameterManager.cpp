@@ -105,6 +105,7 @@ namespace robot_object{
         registration<int16_t>(155, acc_z_ref);
         registration<float>(156, duty_limit);
         registration<uint8_t>(157, silent_flag);
+        registration<uint8_t>(158, send_data_mode);
     }
 
     void ParameterManager::setStrkey(uint16_t val_num, std::string key){

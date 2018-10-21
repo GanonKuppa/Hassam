@@ -4,22 +4,22 @@
 
 namespace robot_object {
 
-class ICM20602{
+class ICM20602 {
 
 public:
-    volatile int16_t omega_raw[3];
-    volatile int16_t acc_raw[3];
-    volatile int16_t temp_raw;
+    int16_t omega_raw[3];
+    int16_t acc_raw[3];
+    int16_t temp_raw;
 
-    volatile int16_t omega_ref[3];
-    volatile int16_t acc_ref[3];
+    int16_t omega_ref[3];
+    int16_t acc_ref[3];
 
-    volatile int16_t omega_c[3];
-    volatile int16_t acc_c[3];
+    int16_t omega_c[3];
+    int16_t acc_c[3];
 
-    volatile float omega_f[3];
-    volatile float acc_f[3];
-    volatile float temp_f;
+    float omega_f[3];
+    float acc_f[3];
+    float temp_f;
 
     static ICM20602& getInstance() {
         static ICM20602 instance;
@@ -32,9 +32,8 @@ public:
     void calibOmegaOffset(uint32_t ref_num);
     void calibAccOffset(uint32_t ref_num);
 
-
 private:
-    const float ACC_2g  = 0.000061035156f;      // g/LSB
+    const float ACC_2g = 0.000061035156f;      // g/LSB
     const float ACC_4g = 0.000122070312f;       // g/LSB
     const float ACC_8g = 0.000244140625f;       // g/LSB
     const float ACC_16g = 0.000488281250f;      // g/LSB
@@ -50,8 +49,12 @@ private:
     const uint16_t REG_WHOAMI = 0x75;
     const uint16_t READ_FLAG = 0x80;
 
-    ICM20602(void) {};
-    ~ICM20602(void) {};
+    ICM20602(void) {
+    }
+    ;
+    ~ICM20602(void) {
+    }
+    ;
     void writeReg(uint8_t adress, uint8_t data);
     uint8_t readReg(uint8_t adress);
 

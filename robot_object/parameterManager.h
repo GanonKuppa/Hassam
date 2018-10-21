@@ -138,6 +138,7 @@ namespace robot_object{
         int16_t acc_z_ref; //155
         float duty_limit; //156
         uint8_t silent_flag; //157
+        uint8_t send_data_mode; //158
         //----管理下においた変数たち-----
 
 
