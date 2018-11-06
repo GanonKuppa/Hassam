@@ -5,10 +5,10 @@
  *      Author: ryota
  */
 
+#include <fanController.h>
+#include <myUtil.h>
 #include "iodefine.h"
-#include "fanController.hpp"
 #include "pwm.h"
-#include "myUtil.hpp"
 #include "timer.h"
 
 namespace peri = peripheral_RX71M;

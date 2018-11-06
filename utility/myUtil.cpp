@@ -5,7 +5,7 @@
  *      Author: ryota
  */
 
-#include <myUtil.hpp>
+#include <myUtil.h>
 #include <stdio.h>
 #include <stdint.h>
 

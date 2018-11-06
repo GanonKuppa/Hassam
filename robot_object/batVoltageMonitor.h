@@ -1,11 +1,11 @@
 #pragma once
 
+#include <myUtil.h>
 #include "iodefine.h"
 #include "stdint.h"
 #include "parameterManager.h"
 #include "ad.h"
 #include <deque>
-#include "myUtil.hpp"
 #include "communication.h"
 #include "sound.h"
 

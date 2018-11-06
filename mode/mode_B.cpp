@@ -5,7 +5,9 @@
  *      Author: ryota
  */
 
-#include <mouse.hpp>
+#include <fanController.h>
+#include <imu.h>
+#include <mouse.h>
 #include <stdint.h>
 #include <uart.h>
 #include "mode_B.h"
@@ -14,13 +16,6 @@
 #include "fcled.h"
 #include "sound.h"
 #include "gamepad.h"
-#include "imu.hpp"
-#include "fanController.hpp"
-
-//Eigen
-//#include <Core>
-//#include <Geometry>
-
 #include "moveEvent.h"
 #include "communication.h"
 #include "parameterManager.h"

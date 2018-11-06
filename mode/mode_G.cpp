@@ -1,35 +1,26 @@
-#include <mouse.hpp>
 #include <stdint.h>
-#include <uart.h>
-#include "mode_GB.h"
+#include <vector>
+
+#include "mouse.h"
+#include "myUtil.h"
+#include "mode_G.h"
+#include "mode.h"
 #include "tactsw.h"
 #include "timer.h"
 #include "fcled.h"
 #include "sound.h"
-#include "pwm.h"
 #include "gamepad.h"
-
 #include "sound.h"
-#include "ICM20602.hpp"
+#include "ICM20602.h"
 #include "moveEvent.h"
 #include "communication.h"
 #include "parameterManager.h"
-#include "myUtil.hpp"
-#include <vector>
-#include <pathCalculation.hpp>
-#include "wheelOdometry.hpp"
-#include "wallsensor.hpp"
+#include "wheelOdometry.h"
+#include "wallsensor.h"
 
 using std::vector;
 
 using namespace robot_object;
-using namespace umouse_object;
-
-
-static bool mode_select;
-static uint8_t mode_change;
-static uint8_t mode_change_pre;
-static uint8_t mode_num;
 
 static float v; //直進の最高速度
 static float a; //直進の加速度
@@ -39,7 +30,39 @@ static float bl_len;
 static float read_wall_offset;
 static float wall_2_section_center_len;
 static int8_t rot_times;
-static uint16_t count_start;
+
+static void init();
+static int8_t startSectionRun();
+static int8_t searchRunLoop(uint8_t destination_x, uint8_t destination_y);
+static int8_t goalSectionRun();
+
+void mode_G() {
+    UMouse &m = UMouse::getInstance();
+    ICM20602 &icm = ICM20602::getInstance();
+
+    printfAsync("G mode\n");
+    printfAsync("探索モード\n");
+
+    init();
+    uint8_t mode_num = 5;
+    uint8_t mode_change = modeSelectLoop(mode_num);
+    if (mode_change == 0) return;
+    if (mode_change == 1 || mode_change == 2) v = 0.3;
+
+    icm.calibOmegaOffset(400);
+    icm.calibAccOffset(400);
+    //addBgmList(wily);
+    if(startSectionRun() == -1) return;
+    if(searchRunLoop(m.goal.x, m.goal.y) == -1) return;
+
+    if (mode_change == 2 || mode_change == 4) return;
+
+    if(goalSectionRun() == -1) return;
+    if(searchRunLoop(m.start.x, m.start.y) == -1) return;
+
+}
+
+
 
 static void init(){
     UMouse &m = UMouse::getInstance();
@@ -72,12 +95,7 @@ static void init(){
     }
 
     //mode関連初期化
-    mode_select = false;
-    mode_change = 0;
-    mode_change_pre = 0;
-    mode_num = 5;
     whOdom.resetTireAng();
-    count_start = 0;
 
     //探索パラメータ初期化
     v_max = 1.0;
@@ -95,7 +113,7 @@ static void init(){
     m.direction = N;
 
 }
-
+/*
 static int8_t modeSelectLoop(){
     ICM20602 &icm = ICM20602::getInstance();
     WallSensor &ws = WallSensor::getInstance();
@@ -126,6 +144,7 @@ static int8_t modeSelectLoop(){
     waitmsec(1000);
     return 0;
 }
+*/
 
 static int8_t startSectionRun(){
     UMouse &m = UMouse::getInstance();
@@ -326,29 +345,5 @@ static int8_t goalSectionRun(){
 }
 
 
-void mode_G() {
-    UMouse &m = UMouse::getInstance();
-    ICM20602 &icm = ICM20602::getInstance();
-
-    printfAsync("G mode\n");
-    printfAsync("探索モード\n");
-
-    init();
-    modeSelectLoop();
-    if (mode_change == 4) return;
-    if (mode_change == 0 || mode_change == 1) v = 0.3;
-
-    icm.calibOmegaOffset(400);
-    icm.calibAccOffset(400);
-    //addBgmList(wily);
-    if(startSectionRun() == -1) return;
-    if(searchRunLoop(m.goal.x, m.goal.y) == -1) return;
-
-    if (mode_change == 1 || mode_change == 3) return;
-
-    if(goalSectionRun() == -1) return;
-    if(searchRunLoop(m.start.x, m.start.y) == -1) return;
-
-}
 
 

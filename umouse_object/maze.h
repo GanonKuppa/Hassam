@@ -1,8 +1,8 @@
 #pragma once
 
+#include <myUtil.h>
+#include <wallsensor.h>
 #include "stdint.h"
-#include "wallsensor.hpp"
-#include "myUtil.hpp"
 #include <map> // pair
 #include <queue>
 #include "communication.h"

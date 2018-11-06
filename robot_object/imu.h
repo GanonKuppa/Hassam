@@ -1,7 +1,7 @@
 #pragma once
 
+#include <ICM20602.h>
 #include <stdint.h>
-#include "ICM20602.hpp"
 
 
 

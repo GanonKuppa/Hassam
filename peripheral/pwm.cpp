@@ -5,7 +5,7 @@
  *      Author: ryota
  */
 
-#include <myUtil.hpp>
+#include <myUtil.h>
 #include "iodefine.h"
 
 #include <stdint.h>

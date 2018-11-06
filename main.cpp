@@ -39,7 +39,7 @@ extern "C" void __main() {
 #include <stdint.h>
 #include <string>
 #include <array>
-#include <myUtil.hpp>
+#include <myUtil.h>
 
 //peripheral_RX71M
 #include "clock.h"
@@ -55,7 +55,7 @@ extern "C" void __main() {
 #include "da.h"
 
 //robot_object
-#include <imu.hpp>
+#include <imu.h>
 
 #include "sound.h"
 #include "tactsw.h"
@@ -63,16 +63,16 @@ extern "C" void __main() {
 #include "communication.h"
 #include "parameterManager.h"
 #include "gamepad.h"
-#include "wallsensor.hpp"
+#include <wallsensor.h>
 #include "moveEvent.h"
-#include "batVoltageMonitor.hpp"
-#include "fanController.hpp"
-#include "wheelOdometry.hpp"
-#include "ICM20602.hpp"
+#include "batVoltageMonitor.h"
+#include <fanController.h>
+#include "wheelOdometry.h"
+#include "ICM20602.h"
 
 //umouse_object
 #include "maze.h"
-#include <mouse.hpp>
+#include <mouse.h>
 
 //mode
 #include "mode.h"

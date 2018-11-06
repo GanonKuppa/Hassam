@@ -8,9 +8,12 @@
 
 
 
-#include <mouse.hpp>
+#include <fanController.h>
+#include <mouse.h>
+#include <pathCalculation.h>
 #include <stdint.h>
 #include <uart.h>
+#include <wallsensor.h>
 #include "mode_R.h"
 #include "tactsw.h"
 #include "timer.h"
@@ -21,16 +24,13 @@
 
 #include "sound.h"
 
-#include "ICM20602.hpp"
+#include "ICM20602.h"
 #include "moveEvent.h"
 #include "communication.h"
 #include "parameterManager.h"
-#include "wallsensor.hpp"
-#include <pathCalculation.hpp>
 #include <vector>
 #include "tactsw.h"
-#include "fanController.hpp"
-#include "wheelOdometry.hpp"
+#include "wheelOdometry.h"
 
 using namespace robot_object;
 using namespace umouse_object;

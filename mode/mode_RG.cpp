@@ -2,9 +2,12 @@
 
 
 
-#include <mouse.hpp>
+#include <mouse.h>
+#include <myUtil.h>
+#include <pathCalculation.h>
 #include <stdint.h>
 #include <uart.h>
+#include <wallsensor.h>
 #include "mode_GB.h"
 #include "tactsw.h"
 #include "timer.h"
@@ -14,14 +17,11 @@
 #include "gamepad.h"
 
 #include "sound.h"
-#include "ICM20602.hpp"
+#include "ICM20602.h"
 #include "moveEvent.h"
 #include "communication.h"
 #include "parameterManager.h"
-#include "myUtil.hpp"
 #include <vector>
-#include <pathCalculation.hpp>
-#include "wallsensor.hpp"
 
 using std::vector;
 

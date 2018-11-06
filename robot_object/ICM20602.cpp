@@ -5,8 +5,8 @@
  *      Author: ryota
  */
 
-#include "ICM20602.hpp"
-#include "myUtil.hpp"
+#include <ICM20602.h>
+#include <myUtil.h>
 #include "spi.h"
 #include "parameterManager.h"
 #include "communication.h"

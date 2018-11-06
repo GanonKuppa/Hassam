@@ -8,11 +8,11 @@
 
 
 
-#include <mouse.hpp>
+#include <mouse.h>
 #include <stdint.h>
 #include <uart.h>
+#include <wallsensor.h>
 #include "mode_RGB.h"
-#include "wallsensor.hpp"
 #include "tactsw.h"
 #include "timer.h"
 #include "fcled.h"

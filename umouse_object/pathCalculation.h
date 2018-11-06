@@ -1,8 +1,8 @@
 #pragma once
 
+#include <myUtil.h>
 #include "stdint.h"
 #include "maze.h"
-#include "myUtil.hpp"
 #include <map> // pair
 #include <vector>
 #include "communication.h"

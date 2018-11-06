@@ -5,14 +5,14 @@
  *      Author: ryota
  */
 
-#include <myUtil.hpp>
-#include <myUtil.hpp>
+#include <myUtil.h>
+#include <myUtil.h>
 #include <timeInterrupt.h>
 #include <uart.h>
+#include <wallsensor.h>
 #include "sound.h"
 #include "da.h"
 #include "timer.h"
-#include "wallsensor.hpp"
 #include <queue>
 #include <array>
 

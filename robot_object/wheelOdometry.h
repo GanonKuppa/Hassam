@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <myUtil.hpp>
 #include <math.h>
+#include <myUtil.h>
 
 #include "iodefine.h"
 #include "phaseCounting.h"
@@ -124,8 +124,8 @@ public:
 
         rpm_R = v_R * 60.0 /(PI * pm.dia_tire);
         rpm_L = v_L * 60.0 /(PI * pm.dia_tire);
-        tire_ang_R += count_diff_L / ENC_RESOLUTION / GEAR_RATIO * 360.0;
-        tire_ang_L += count_diff_R / ENC_RESOLUTION / GEAR_RATIO * 360.0;
+        tire_ang_R += count_diff_R / ENC_RESOLUTION / GEAR_RATIO * 360.0;
+        tire_ang_L += count_diff_L / ENC_RESOLUTION / GEAR_RATIO * 360.0;
         tire_ang_R = fmod(tire_ang_R+360.0, 360.0);
         tire_ang_L = fmod(tire_ang_L+360.0, 360.0);
 

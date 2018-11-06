@@ -8,9 +8,10 @@
 
 
 
-#include <mouse.hpp>
+#include <mouse.h>
 #include <stdint.h>
 #include <uart.h>
+#include <wallsensor.h>
 #include "mode_R.h"
 #include "tactsw.h"
 #include "timer.h"
@@ -25,7 +26,6 @@
 #include "communication.h"
 #include "parameterManager.h"
 #include "tactsw.h"
-#include "wallsensor.hpp"
 
 using namespace robot_object;
 

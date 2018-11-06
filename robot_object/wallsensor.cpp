@@ -4,8 +4,8 @@
  *  Created on: 2018/06/09
  *      Author: ryota
  */
-#include "wallsensor.hpp"
-#include "mouse.hpp"
+#include <mouse.h>
+#include <wallsensor.h>
 
 namespace robot_object {
 

@@ -6,12 +6,17 @@
  */
 
 
-#include <mouse.hpp>
+#include <imu.h>
+#include <ICM20602.h>
+#include <mouse.h>
+#include <myUtil.h>
 #include "communication.h"
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <wallsensor.h>
+#include <wheelOdometry.h>
 
 #include "uart.h"
 #include "timeInterrupt.h"
@@ -21,18 +26,11 @@
 #include "pwm.h"
 
 #include "sound.h"
-#include "imu.hpp"
 #include "tactsw.h"
 #include "fcled.h"
-#include "wallsensor.hpp"
 #include "gamepad.h"
-#include "WheelOdometry.hpp"
-#include "ICM20602.hpp"
-
 #include "maze.h"
 #include "parameterManager.h"
-
-#include "myUtil.hpp"
 
 #include <deque>
 #include <queue>

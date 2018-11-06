@@ -440,7 +440,7 @@ void famimaMinor(void){
 }
 
 
-#include <myUtil.hpp>
+#include <myUtil.h>
 void randomNote(uint16_t seed){
 	Note note;
 

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <math.h>
-#include <myUtil.hpp>
+#include <myUtil.h>
 #include <deque>
 
 #include "iodefine.h"
@@ -12,11 +12,11 @@
 #include "maze.h"
 #include "machineParameters.h"
 #include "math.h"
-#include "imu.hpp"
+#include "imu.h"
 #include "parameterManager.h"
 #include "timer.h"
-#include "wheelOdometry.hpp"
-#include "ICM20602.hpp"
+#include "wheelOdometry.h"
+#include "ICM20602.h"
 
 namespace peri = peripheral_RX71M;
 using peri::waitmsec;
