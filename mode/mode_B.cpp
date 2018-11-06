@@ -23,7 +23,7 @@
 
 #include "moveEvent.h"
 #include "communication.h"
-
+#include "parameterManager.h"
 using namespace robot_object;
 
 void mode_B(){
@@ -35,7 +35,7 @@ void mode_B(){
     Gamepad &gamepad = Gamepad::getInstance();
     UMouse  &mouse   = UMouse::getInstance();
     FanController &fc = FanController::getInstance();
-
+    ParameterManager &pm = ParameterManager::getInstance();
 
     while(1){
         waitmsec(1);
@@ -44,14 +44,15 @@ void mode_B(){
 
         if(gamepad.X > 0 && gamepad.X < 50 ){
             SEA();
-            events.push(new Trape(0.18*8,0.1,0.0,0.0,3.0, true));
+            //events.push(new Trape(0.18*8,0.1,0.0,0.0,3.0, false));
+            events.push(new SwitchBack());
             events.push(new Stop(1000));
             waitmsec(100);
         }
 
         if(gamepad.Y > 0 && gamepad.Y < 50 ){
             SEA();
-            events.push(new Trape(0.18*8,0.2,0.0,0.0,3.0, true));
+            events.push(new Trape(pm.test_run_x, pm.test_run_v, 0.0, 0.0, pm.test_run_a, pm.test_run_wall_flag));
             events.push(new Stop(1000));
             waitmsec(100);
         }
@@ -59,27 +60,27 @@ void mode_B(){
 
         if(gamepad.LB > 0 && gamepad.LB < 50){
             SEA();
-            events.push(new Trape(0.18*8,0.3,0.0,0.0,3.0, true));
+            events.push(new Trape(pm.test_run_x, pm.test_run_v, 0.0, 0.05, pm.test_run_a, pm.test_run_wall_flag));
             events.push(new Stop(1000));
             waitmsec(100);
         }
         if(gamepad.RB > 0 && gamepad.RB < 50){
             SEA();
-            events.push(new Trape(0.18*8,0.4,0.0,0.0,3.0, true));
+            events.push(new Trape(0.18*8,0.4,0.0,0.0,3.0, false));
             events.push(new Stop(1000));
             waitmsec(100);
         }
 
         if(gamepad.START > 0 && gamepad.START < 50){
             SEA();
-            events.push(new Trape(0.18*8,0.5,0.0,0.0,3.0, true));
+            events.push(new Trape(0.18*8,0.5,0.0,0.0,3.0, false));
             events.push(new Stop(1000));
             waitmsec(100);
         }
 
-        if(gamepad.BACK > 50 && gamepad.BACK < 50){
+        if(gamepad.BACK > 0 && gamepad.BACK < 50){
             SEA();
-            events.push(new Trape(0.18*8,1.0,0.0,0.0,3.0, true));
+            events.push(new Trape(0.18*8,1.0,0.0,0.0,3.0, false));
             events.push(new Stop(1000));
             waitmsec(100);
         }

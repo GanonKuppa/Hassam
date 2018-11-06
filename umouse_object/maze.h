@@ -6,6 +6,7 @@
 #include <map> // pair
 #include <queue>
 #include "communication.h"
+#include "dataFlash.h"
 using std::queue;
 using std::pair;
 
@@ -110,12 +111,22 @@ public:
     void initWall() {
         for(int x=0;x<32;x++) {
             for(int y=0;y<32;y++) {
+                p_map[x][y] = 0;
                 Wall wall;
                 wall.setByUint8(0);
                 writeWall(x,y,wall);
             }
         }
     };
+
+    void initReached() {
+        for(int i=0;i<32;i++) reached[i] = 0;
+    }
+
+    void init(){
+        initWall();
+        initReached();
+    }
 
     void writeWall(uint16_t x, uint16_t y, direction_e dir, WallSensor& ws){
         Wall wall = readWall(x,y);
@@ -402,6 +413,76 @@ public:
         else if (rot_times == -6) rot_times = 2;
         else if (rot_times == -4) rot_times = 4;
         return rot_times;
+
+    }
+
+    //
+    void serializeMazeData(uint8_t* byte_arr){
+        uint8_t* p;
+
+        p = reinterpret_cast<uint8_t *>(&walls_vertical[0]);
+        for(uint16_t i=0; i<sizeof(walls_vertical); i++) byte_arr[i] = p[i];
+
+        p = reinterpret_cast<uint8_t *>(&walls_horizontal[0]);
+        for(uint16_t i=0; i<sizeof(walls_horizontal); i++) byte_arr[i+sizeof(walls_vertical)] = p[i];
+
+        p = reinterpret_cast<uint8_t *>(&reached[0]);
+        for(uint16_t i=0; i<sizeof(reached); i++) byte_arr[i+sizeof(walls_vertical)+sizeof(walls_horizontal)] = p[i];
+    }
+
+    void writeMazeData2Flash(void){
+        const uint16_t WRITE_TARGET_BLOCK = 512;
+        const uint16_t START_INDEX = WRITE_TARGET_BLOCK * peri::DATA_FLASH_BLOCK_BYTE_SIZE;
+        const uint16_t BLOCK_NUM = 10;
+        const uint32_t LEN = peri::DATA_FLASH_BLOCK_BYTE_SIZE;
+
+        uint8_t write_val[BLOCK_NUM * LEN];
+        serializeMazeData(&write_val[0]);
+
+        //4*31+4*31+4*32 = 376byte
+        // データフラッシュを10ブロック分イレイズ
+        for(uint8_t i=0;i<BLOCK_NUM;i++){
+            uint32_t index = START_INDEX + i*LEN;
+            while(1){
+                if(peri::eraseCheckDataFlash(index, LEN) == false){
+                    peri::eraseDataFlash(index);
+                };
+                peri::writeDataFlash(index, &write_val[i*LEN], LEN);
+                uint8_t read_val[LEN];
+                peri::readDataFlash(index, &read_val[0], LEN);
+
+                bool check_result = true;
+                for(uint8_t j=0; j<LEN; j++){
+                    if(read_val[j] != write_val[i*LEN+j]){
+                        printfAsync("write error!\n");
+                        check_result = false;
+                    }
+                }
+                if(check_result == true) break;
+
+            }
+        }
+    }
+    void readMazeDataFromFlash(void){
+        const uint16_t WRITE_TARGET_BLOCK = 512;
+        const uint16_t START_INDEX = WRITE_TARGET_BLOCK * peri::DATA_FLASH_BLOCK_BYTE_SIZE;
+        const uint16_t BLOCK_NUM = 10;
+        const uint32_t LEN = peri::DATA_FLASH_BLOCK_BYTE_SIZE * BLOCK_NUM;
+
+
+        uint8_t byte_arr[LEN];
+
+        uint8_t* p;
+        peri::readDataFlash(START_INDEX, &byte_arr[0], LEN);
+
+        p = reinterpret_cast<uint8_t *>(&walls_vertical[0]);
+        for(uint16_t i=0; i<sizeof(walls_vertical); i++) p[i] = byte_arr[i];
+
+        p = reinterpret_cast<uint8_t *>(&walls_horizontal[0]);
+        for(uint16_t i=0; i<sizeof(walls_horizontal); i++) p[i] = byte_arr[i+sizeof(walls_vertical)];
+
+        p = reinterpret_cast<uint8_t *>(&reached[0]);
+        for(uint16_t i=0; i<sizeof(reached); i++) p[i] = byte_arr[i+sizeof(walls_vertical) +sizeof(walls_horizontal) ];
 
     }
 

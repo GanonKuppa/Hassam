@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <mouse.hpp>
 #include <myUtil.hpp>
 #include <uart.h>
@@ -97,8 +98,9 @@ public:
         u_k0 = u_k1 + delta_u_k;
 
         u_k1 = u_k0;
-        e_k1 = e_k0;
         e_k2 = e_k1;
+        e_k1 = e_k0;
+
     };
 
     float getControlVal() {
@@ -217,8 +219,10 @@ public:
         u_k0 = u_k1 + delta_u_k;
 
         u_k1 = u_k0;
-        e_k1 = e_k0;
         e_k2 = e_k1;
+        e_k1 = e_k0;
+
+        if(valid_error_num == 0) u_k0 = 0.0;
 
     };
 
@@ -237,6 +241,9 @@ protected:
 
     float accum_ang;
     float accum_x;
+    float x_lc;
+    float y_lc;
+
     uint32_t count;
     const float DELTA_T = 0.001;
     const float PI = 3.14159265358979323846264;
@@ -247,6 +254,10 @@ protected:
     BaseMoveEvent() {
         accum_ang = 0.0;
         accum_x = 0.0;
+
+        x_lc = 0.0;
+        y_lc = 0.0;
+
         count = 0;
     }
 
@@ -311,8 +322,8 @@ public:
             torque_scaler_L = pm.torque_scaler_right;
             K_T_R = pm.K_T_left;
             K_T_L = pm.K_T_right;
-            K_E_R = (2 * PI) / 60 * K_T_R;
-            K_E_L = (2 * PI) / 60 * K_T_L;
+            K_E_R = (2 * PI) / 60 * K_T_L;
+            K_E_L = (2 * PI) / 60 * K_T_R;
             Vcc_R = batVolMon.front_bat_vol;
             Vcc_L = batVolMon.back_bat_vol;
         }
@@ -422,6 +433,8 @@ public:
         //実角度,実距離の積分
         accum_ang += imu.omega_f[2] * DELTA_T;
         accum_x += wodo.getV(m.switch_back) * DELTA_T;
+        x_lc += wodo.getV(m.switch_back) * sinf(DEG2RAD(accum_ang));
+        y_lc += wodo.getV(m.switch_back) * cosf(DEG2RAD(accum_ang));
 
         //角度, 壁制御量の算出
         wall_ctrl.update(ws);
@@ -472,6 +485,7 @@ public:
     float v_0;
     float v_end;
     float a;
+    VelocityTypePidController y_lc_ctrl;
 
     Trape(float x_, float v_max_, float v_0_, float v_end_, float a_, bool wall_ctrl_flag) {
         ParameterManager &pm = ParameterManager::getInstance();
@@ -486,6 +500,7 @@ public:
         accum_ang = 0.0;
         accum_x = 0.0;
 
+
         if(a != 0.0) {
             x_acc = ( (v_max * v_max) - (v_0 * v_0) ) / (2.0*a);
             x_bre = ( (v_max * v_max) - (v_end * v_end) ) / (2.0*a);
@@ -499,15 +514,87 @@ public:
         ang_v_ctrl.set(pm.straight_ang_v_P, pm.straight_ang_v_I, pm.straight_ang_v_D);
         ang_ctrl.set(pm.straight_ang_P, pm.straight_ang_I, pm.straight_ang_D);
         v_ctrl.set(pm.straight_v_P, pm.straight_v_I, pm.straight_v_D);
+        y_lc_ctrl.set(pm.y_lc_P, pm.y_lc_I, pm.y_lc_D);
 
         if(wall_ctrl_flag == false)wall_ctrl.set(0.0, 1.0, 0.0);
-        else wall_ctrl.set(pm.wall_P, pm.wall_I, pm.wall_D);
+        else{
+            if(pm.half_flag == 0)wall_ctrl.set(pm.wall_P, pm.wall_I, pm.wall_D);
+            else wall_ctrl.set(pm.HF_wall_P, pm.HF_wall_I, pm.HF_wall_D);
+        }
         //ターゲットの初期化
         trans_t.set(a, v_0, 0.0, DELTA_T);
         rot_t.set(0.0, 0.0, 0.0, DELTA_T);
 
         //printfAsync("In Trape\n");
     };
+
+    Vector2f calcDuty() {
+        Vector2f duty(0.0,0.0);
+        UMouse &m = UMouse::getInstance();
+        ParameterManager &pm = ParameterManager::getInstance();
+        WallSensor &ws = WallSensor::getInstance();
+        WheelOdometry &wodo = WheelOdometry::getInstance();
+        ICM20602 &imu = ICM20602::getInstance();
+
+        //ターンの開始時実行処理
+        if(count == 0) {
+            //ang_v_ctrl.error_i = m.ang_v_I / ang_v_ctrl.Ki;
+            //v_ctrl.error_i = m.v_I / v_ctrl.Ki;
+        }
+
+        //ターゲットの積分
+        updateTarget();
+
+        //実角度,実距離の積分
+        accum_ang += imu.omega_f[2] * DELTA_T;
+        accum_x += wodo.getV(m.switch_back) * DELTA_T;
+        x_lc += wodo.getV(m.switch_back) * cosf(DEG2RAD(accum_ang)) * DELTA_T;
+        y_lc += wodo.getV(m.switch_back) * sinf(DEG2RAD(accum_ang)) * DELTA_T;
+
+        //角度, 壁制御量の算出
+        wall_ctrl.update(ws);
+        ang_ctrl.update(rot_t.x, accum_ang);
+        y_lc_ctrl.update(0.0, y_lc);
+        float FB_ang = ang_ctrl.getControlVal();
+        float FB_wall = wall_ctrl.getControlVal();
+        float FB_y_lc = y_lc_ctrl.getControlVal();
+
+        if(FB_wall != 0.0){
+            FB_ang = 0.0;
+            FB_y_lc = 0.0;
+            ang_ctrl.set(0.0, 1.0, 0.0);
+            y_lc_ctrl.set(0.0, 1.0, 0.0);
+        }
+
+
+        //角速度, 速度制御量の算出
+        float target_v = trans_t.v;
+        float target_ang_v = rot_t.v + FB_ang + FB_wall + FB_y_lc;
+        ang_v_ctrl.update(target_ang_v, imu.omega_f[2]);//imu.omega_f[2] wodo.getAng_v(m.switch_back)
+        v_ctrl.update(target_v, wodo.getAveV(m.switch_back));
+
+        //制御量をdutyに変換
+        float target_a = trans_t.a;
+        float target_ang_a = rot_t.a;
+
+        Vector2f dutyFF(0.0f, 0.0f);
+        dutyFF = calcFFDuty(target_a, target_v, target_ang_a, target_ang_v);
+
+        float FB_v = v_ctrl.getControlVal();
+        float FB_ang_v = ang_v_ctrl.getControlVal();
+        Vector2f dutyFB(0.0f, 0.0f);
+        dutyFB = calcFBDuty(FB_v, FB_ang_v);
+
+        duty = dutyFF + dutyFB;
+
+        //計算した制御量をmouseにセット(制御量のグラフ描画用)
+        updateMousePidErrorVal();
+
+        count ++;
+
+        return duty;
+        };
+
 
     bool isEnd() {
 
@@ -519,7 +606,7 @@ public:
             }
         }
         else {
-            if(accum_x >= x) {
+            if(x_lc >= x) {
                 //printfAsync("Out Trape\n");
                 return true;
             }
@@ -536,11 +623,17 @@ public:
             }
             else if( trans_t.x < x) {
                 trans_t.a = -1.0 * a;
+                if(trans_t.x < 0.008) wall_ctrl.set(0.0, 1.0, 0.0);
             }
-            else if( trans_t.x >= x) {
+            else if( trans_t.x >= x || trans_t.v < 0.0) {
                 trans_t.a = 0.0;
                 trans_t.v = v_end;
+                wall_ctrl.set(0.0, 1.0, 0.0); // 直線終了間際は壁制御を入れない
+                ang_ctrl.set(0.0, 1.0, 0.0);
+                y_lc_ctrl.set(0.0, 1.0, 0.0);
+
             }
+
         }
         //加速度が低くv_endに到達できない場合
         else {
@@ -553,12 +646,28 @@ public:
 
             if( (x_bre_now >= (x - trans_t.x)) && (trans_t.a > 0.0) ) {
                 trans_t.a = (-1.0)*a;
+                if(trans_t.x < 0.008){
+                    wall_ctrl.set(0.0, 1.0, 0.0);
+                    ang_ctrl.set(0.0, 1.0, 0.0);
+                    y_lc_ctrl.set(0.0, 1.0, 0.0);
+                }
             }
+        }
+
+        if(trans_t.v < 0.0) {
+            trans_t.a = 0.0;
+            trans_t.v = v_end;
+            wall_ctrl.set(0.0, 1.0, 0.0);
+            ang_ctrl.set(0.0, 1.0, 0.0);
+            y_lc_ctrl.set(0.0, 1.0, 0.0);
+
         }
 
         WallSensor& ws = WallSensor::getInstance();
         ParameterManager &pm = ParameterManager::getInstance();
         //if(ws.ahead.at(0)>pm.collision_thr_ahead) return true;
+
+
 
         return false;
     };
@@ -649,7 +758,7 @@ public:
 
         //変数初期化
         end_ang = ang;
-        rot_a = SIGN(ang)* 1000.0;
+        rot_a = SIGN(ang)* pm.pivot_ang_a;
         accum_ang = 0.0;
         accum_x = 0.0;
         abs_min_rot_v = 15.0;
@@ -1063,6 +1172,74 @@ public:
 
 };
 
+class Slalom_classic_90deg_no_straight : public BaseMoveEvent {
+
+private:
+#include "kappa.h"
+
+public:
+
+    float rot_dir;
+
+
+    Slalom_classic_90deg_no_straight(float v, float dir) {
+        ParameterManager &pm = ParameterManager::getInstance();
+
+        //変数初期化
+        accum_ang = 0.0;
+        accum_x = 0.0;
+        //printfAsync("In slalom classic 90deg\n ");
+
+        rot_dir = SIGN(dir);
+        //各種制御の初期化
+        ang_v_ctrl.set(pm.slalom_ang_v_P, pm.slalom_ang_v_I, pm.slalom_ang_v_D);
+        ang_ctrl.set(pm.slalom_ang_P, pm.slalom_ang_I, pm.slalom_ang_D);
+        v_ctrl.set(pm.slalom_v_P, pm.slalom_v_I, pm.slalom_v_D);
+        wall_ctrl.set(0.0, 1.0, 0.0);
+
+        //ターゲットの初期化
+        trans_t.set(0.0, v, 0.0, DELTA_T);
+        rot_t.set(0.0, 0.0, 0.0, DELTA_T);
+
+    };
+
+
+
+    bool isEnd() {
+        if(accum_x > path_len_90deg_classic) {
+            //printfAsync("Out slalom classic 90deg\n ");
+            return true;
+        }
+        else return false;
+    };
+
+    void updateTarget(){
+        trans_t.update();
+            uint16_t index = uint16_t( trans_t.x /delta_s_len_90deg_classic);
+
+        if(index <= 0) {
+            index = 0;
+            rot_t.a = 0.0;
+            rot_t.v = 0.0;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+        else if(index >= kappa_len_90deg_classic - 1) {
+            rot_t.a = 0.0;
+            rot_t.v = 0.0;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+        else {
+            float rot_t_v_pre = rot_t.v;
+            rot_t.v = RAD2DEG(rot_dir * kappa_90deg_classic[index] * trans_t.v);
+            rot_t.a = (rot_t.v - rot_t_v_pre)/DELTA_T;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+
+    }
+};
+
+
+
 
 class Slalom_half_90deg : public BaseMoveEvent {
 
@@ -1164,7 +1341,71 @@ public:
     }
 };
 
+class Slalom_half_90deg_no_straight : public BaseMoveEvent {
 
+private:
+#include "kappa.h"
+
+public:
+
+    float rot_dir;
+
+
+    Slalom_half_90deg_no_straight(float v, float dir) {
+        ParameterManager &pm = ParameterManager::getInstance();
+
+        //変数初期化
+        accum_ang = 0.0;
+        accum_x = 0.0;
+        //printfAsync("In slalom classic 90deg\n ");
+
+        rot_dir = SIGN(dir);
+        //各種制御の初期化
+        ang_v_ctrl.set(pm.slalom_ang_v_P, pm.slalom_ang_v_I, pm.slalom_ang_v_D);
+        ang_ctrl.set(pm.slalom_ang_P, pm.slalom_ang_I, pm.slalom_ang_D);
+        v_ctrl.set(pm.slalom_v_P, pm.slalom_v_I, pm.slalom_v_D);
+        wall_ctrl.set(0.0, 1.0, 0.0);
+
+        //ターゲットの初期化
+        trans_t.set(0.0, v, 0.0, DELTA_T);
+        rot_t.set(0.0, 0.0, 0.0, DELTA_T);
+
+    };
+
+
+
+    bool isEnd() {
+        if(accum_x > path_len_90deg_half) {
+            //printfAsync("Out slalom classic 90deg\n ");
+            return true;
+        }
+        else return false;
+    };
+
+    void updateTarget(){
+        trans_t.update();
+            uint16_t index = uint16_t( trans_t.x /delta_s_len_90deg_half);
+
+        if(index <= 0) {
+            index = 0;
+            rot_t.a = 0.0;
+            rot_t.v = 0.0;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+        else if(index >= kappa_len_90deg_half - 1) {
+            rot_t.a = 0.0;
+            rot_t.v = 0.0;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+        else {
+            float rot_t_v_pre = rot_t.v;
+            rot_t.v = RAD2DEG(rot_dir * kappa_90deg_half[index] * trans_t.v);
+            rot_t.a = (rot_t.v - rot_t_v_pre)/DELTA_T;
+            rot_t.x += rot_t.v * DELTA_T;
+        }
+
+    }
+};
 
 
 class EventList {

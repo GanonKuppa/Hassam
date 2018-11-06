@@ -133,6 +133,9 @@ public:
     deque<float> ang_v_buff;
     deque<float> t_v_buff;
     deque<float> v_buff;
+    deque<float> v_acc_buff;
+    deque<float> acc_x_buff;
+    deque<float> acc_y_buff;
 
     Maze maze;
 
@@ -142,6 +145,9 @@ public:
             ang_v_buff.push_front(0.0);
             t_v_buff.push_front(0.0);
             v_buff.push_front(0.0);
+            v_acc_buff.push_front(0.0);
+            acc_x_buff.push_front(0.0);
+            acc_y_buff.push_front(0.0);
         }
     }
 
@@ -170,7 +176,7 @@ public:
         WheelOdometry &wo = WheelOdometry::getInstance();
         ICM20602 &icm = ICM20602::getInstance();
         if (ABS(wo.v) < 0.01) acc_v = 0.0;
-        else acc_v += icm.acc_f[1] * 0.001;
+        else acc_v += icm.acc_f[1] * 0.001 *  9.80665;
         updateBuff();
     }
 
@@ -286,6 +292,7 @@ private:
         //ab_ang = 90.0;
         switch_back = false;
         initBuff();
+        maze.readMazeDataFromFlash();
     }
     ;
     ~UMouse() {

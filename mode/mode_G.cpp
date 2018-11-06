@@ -17,6 +17,7 @@
 #include "myUtil.hpp"
 #include <vector>
 #include <pathCalculation.hpp>
+#include "wheelOdometry.hpp"
 #include "wallsensor.hpp"
 
 using std::vector;
@@ -57,25 +58,30 @@ static void init(){
         bl_len = 0.18;
         read_wall_offset = 0.01;
         wall_2_section_center_len = 0.045;
+        v = pm.v_search_run; //探索速度
+        a = pm.a_search_run; //直進の加速度
+
+
     }
     else{
         bl_len = 0.09;
         read_wall_offset = 0.005;
         wall_2_section_center_len = 0.005;
+        v = pm.HF_v_search_run; //探索速度
+        a = pm.HF_a_search_run; //直進の加速度
     }
 
     //mode関連初期化
     mode_select = false;
     mode_change = 0;
     mode_change_pre = 0;
-    mode_num = 4;
+    mode_num = 5;
     whOdom.resetTireAng();
-    uint16_t count_start = 0;
+    count_start = 0;
+
     //探索パラメータ初期化
-    v = pm.v_search_run; //探索速度
-    a = 3.0; //直進の加速度
     v_max = 1.0;
-    v_min = 0.1;
+    v_min = 0.15;
     rot_times = 0;
 
 
@@ -100,15 +106,16 @@ static int8_t modeSelectLoop(){
         mode_change = (int)((whOdom.getTireAng_R() / 360.0) * (float)mode_num);
         if(mode_change != mode_change_pre) SEA();
 
-        if (mode_change == 0) fcled.turn(1, 0, 0);  //行き帰りスラ探
-        else if (mode_change == 1) fcled.turn(0, 1, 0); //行きスラ探
+        if (mode_change == 0) fcled.turn(1, 0, 0);  //行き帰り超信知探索 (低速)
+        else if (mode_change == 1) fcled.turn(0, 1, 0); //行き超信知探索 (低速)
         else if (mode_change == 2) fcled.turn(0, 0, 1); //行き帰り超信知探索
         else if (mode_change == 3) fcled.turn(1, 1, 1); //行き超信知探索
+        else if (mode_change == 4) fcled.turn(0, 0, 0); //モードセレクトへ帰る
 
         mode_change_pre = mode_change;
 
         if (count_start > 1500) break;
-        if (ws.ahead() > 1500) {
+        if (ws.ahead() > 2500) {
             count_start++;
             if(count_start % 500 == 0) SEA();
         }
@@ -126,7 +133,7 @@ static int8_t startSectionRun(){
 
     events.push(new Stop(500));
     m.maze.updateWall(m.coor.x, m.coor.y, m.direction, WallSensor::getInstance());
-    events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
+    events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
     m.coor.y++;
     return 0;
 }
@@ -170,10 +177,11 @@ static int8_t searchRunLoop(uint8_t destination_x, uint8_t destination_y){
 
            m.maze.updateWall(m.coor.x, m.coor.y, m.direction, ws);
            //---ゴールに着いたら探索終了
-           if (m.coor == m.goal) {
-               events.push(new Trape(bl_len/2.0 + read_wall_offset, v, v, v_min, a, true));
+           if (m.coor.x == destination_x && m.coor.y == destination_y) {
+               events.push(new Trape(bl_len/2.0 + read_wall_offset, v, v, v_min, a, false));
                events.push(new Stop(1000));
                famima();
+               m.maze.writeMazeData2Flash();
                return 0;
            }
 
@@ -200,54 +208,63 @@ static int8_t searchRunLoop(uint8_t destination_x, uint8_t destination_y){
                    rot_times = m.maze.calcRotTimes(dest_dir, m.direction);
                    printfAsync("%d 新たなMinDirection\n", rot_times);
 
-                   events.push(new Trape(read_wall_offset + bl_len / 4.0, v, v, v_min, a, true));
+                   events.push(new Trape(read_wall_offset + bl_len / 4.0, v, v, v_min, a, false));
                    while (events.empty() == false)
                        peri::waitusec(10);
 
                    if (rot_times == 4) {
                        if (ws.isAhead() == true) {
                            //尻当て
-                           events.push(new Trape(bl_len/2.0, 0.2, 0.2, 0.0, a, true));
-                           events.push(new Stop(50));
+                           events.push(new Trape(bl_len/2.0, 0.2, 0.2, 0.0, a, false));
+                           events.push(new Stop(5));
                            //events.push(new SwitchBack());
                            events.push(new PivotTurn(45.0f * rot_times));
-                           events.push(new Trape(wall_2_section_center_len + bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
-                           events.push(new Stop(50));
+                           events.push(new Stop(5));
+                           events.push(new Trape(wall_2_section_center_len + bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
                        }
                        else{
-                           events.push(new Stop(50));
+                           events.push(new Stop(5));
                            //events.push(new SwitchBack());
                            events.push(new PivotTurn(45.0f * rot_times));
-                           events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
+                           events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
+
                        }
                    }
                    else if(rot_times == 0 || ABS(rot_times) == 2) {
-                       events.push(new PivotTurn(45.0f * rot_times));
-                       events.push(new Trape(bl_len/2.0 - read_wall_offset, v, v_min, v, a, true));
+                       if(ws.ahead() % 2 == 0) events.push(new PivotTurn(45.0f * rot_times));
+                       else{
+                           events.push(new PivotTurn(-45.0f * rot_times));
+                           events.push(new SwitchBack());
+                       }
+                       events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
                    }
-
+                   else if(rot_times == 0){
+                       events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
+                   }
                }
                else {
                    if (rot_times == 0) {
                        printfAsync("問題なし まっすぐ\n");
-                       events.push(new Trape(bl_len * 3.0 / 4.0, v, v, v, a, true));
+                       events.push(new Trape(bl_len * 2.0 / 4.0, v, v, v, a, false));
+                       events.push(new Trape(bl_len * 1.0 / 4.0, v, v, v, a, true));
                    }
                    else if (rot_times == 4) {
                        //printfAsync("問題なし すいっちばっく\n");
                        if (ws.isAhead() == true) {
                           //尻当て
-                          events.push(new Trape(bl_len * 3.0/4.0, 0.2, 0.2, 0.0, a, true));
+                          events.push(new Trape(bl_len * 3.0/4.0, 0.2, 0.2, 0.0, a, false));
+                          events.push(new Stop(5));
+                          if(ws.ahead() % 3 == 0) events.push(new SwitchBack());
+                          else events.push(new PivotTurn(45.0f * rot_times));
                           events.push(new Stop(50));
-                          //events.push(new SwitchBack());
-                          events.push(new PivotTurn(45.0f * rot_times));
-                          events.push(new Trape(wall_2_section_center_len + bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
-                          events.push(new Stop(50));
+                          events.push(new Trape(wall_2_section_center_len + bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
+
                        }
                        else{
-                          events.push(new Stop(50));
+                          events.push(new Stop(5));
                           //events.push(new SwitchBack());
                           events.push(new PivotTurn(45.0f * rot_times));
-                          events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
+                          events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
                        }
 
 
@@ -256,16 +273,16 @@ static int8_t searchRunLoop(uint8_t destination_x, uint8_t destination_y){
            }
            else if (ABS(rot_times) == 2) {
                printfAsync("問題なし 曲がる\n");
-               if(mode_change == 0 || mode_change == 1){
-                   if(pm.half_flag == 0) events.push(new Slalom_classic_90deg(v, 45.0f * rot_times, true));
-                   else events.push(new Slalom_half_90deg(v, 45.0f * rot_times, true));
-               }else{
-                   events.push(new Trape(read_wall_offset + bl_len/2.0, v, v, v_min, a, true));
-                   events.push(new Stop(50));
-                   events.push(new PivotTurn(45.0f * rot_times));
-                   events.push(new Stop(50));
-                   events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
+               events.push(new Trape(read_wall_offset + bl_len/2.0, v, v, v_min, a, false));
+               events.push(new Stop(5));
+               if(ws.ahead() % 2 == 0) events.push(new PivotTurn(45.0f * rot_times));
+               else{
+                   events.push(new PivotTurn(-45.0f * rot_times));
+                   events.push(new SwitchBack());
                }
+               events.push(new Stop(5));
+               events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
+
            }
 
            m.direction = m.maze.getMinDirection(m.coor.x, m.coor.y, m.direction);
@@ -298,7 +315,7 @@ static int8_t goalSectionRun(){
         events.push(new PivotTurn(45.0f * rot_times));
     }
     events.push(new Stop(50));
-    events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, true));
+    events.push(new Trape(bl_len/2.0 - read_wall_offset, v, 0.0, v, a, false));
 
     m.direction = m.maze.getMinDirection(m.coor.x, m.coor.y, m.direction);
     if (m.direction == E) m.coor.x++;
@@ -318,13 +335,17 @@ void mode_G() {
 
     init();
     modeSelectLoop();
+    if (mode_change == 4) return;
+    if (mode_change == 0 || mode_change == 1) v = 0.3;
 
     icm.calibOmegaOffset(400);
     icm.calibAccOffset(400);
     //addBgmList(wily);
     if(startSectionRun() == -1) return;
     if(searchRunLoop(m.goal.x, m.goal.y) == -1) return;
+
     if (mode_change == 1 || mode_change == 3) return;
+
     if(goalSectionRun() == -1) return;
     if(searchRunLoop(m.start.x, m.start.y) == -1) return;
 

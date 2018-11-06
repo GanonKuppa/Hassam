@@ -353,6 +353,7 @@ namespace peripheral_RX71M{
         }
     }
 
+
     bool eraseDataFlash(uint32_t org){
         if(org >= data_flash_size) {
             error_ = error::ADDRESS;

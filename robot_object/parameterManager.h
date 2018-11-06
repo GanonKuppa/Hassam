@@ -99,36 +99,61 @@ namespace robot_object{
         float wall_P; //39
         float wall_I; //40
         float wall_D; //41
+        float y_lc_P; //42
+        float y_lc_I; //43
+        float  y_lc_D; //44
+        float HF_wall_P; //45
+        float HF_wall_I; //46
+        float HF_wall_D; //47
 
-        uint8_t goal_x; //100
-        uint8_t goal_y; //101
-        uint8_t half_flag; //102
-        uint16_t front_wall_center_r; //103
-        uint16_t front_wall_center_l; //104
-        uint16_t back_wall_center_r; //105
-        uint16_t back_wall_center_l; //106
-        uint16_t front_collision_thr_ahead; //107
-        uint16_t back_collision_thr_ahead; //108
-        uint16_t front_wall_threshold_right; //109
-        uint16_t front_wall_threshold_left; //110
-        uint16_t front_wall_threshold_ahead; //111
-        uint16_t back_wall_threshold_right; //112
-        uint16_t back_wall_threshold_left; //113
-        uint16_t back_wall_threshold_ahead; //114
-        uint16_t HF_front_wall_center_r; //115
-        uint16_t HF_front_wall_center_l; //116
-        uint16_t HF_back_wall_center_r; //117
-        uint16_t HF_back_wall_center_l; //118
-        uint16_t HF_front_collision_thr_ahead; //119
-        uint16_t HF_back_collision_thr_ahead; //120
-        uint16_t HF_front_wall_threshold_right; //121
-        uint16_t HF_front_wall_threshold_left; //122
-        uint16_t HF_front_wall_threshold_ahead; //123
-        uint16_t HF_back_wall_threshold_right; //124
-        uint16_t HF_back_wall_threshold_left; //125
-        uint16_t HF_back_wall_threshold_ahead; //126
-        float v_search_run; //127
-        float HF_v_search_run; //128
+        uint16_t front_wall_center_r; //100
+        uint16_t front_wall_center_l; //101
+        uint16_t back_wall_center_r; //102
+        uint16_t back_wall_center_l; //103
+        uint16_t front_collision_thr_ahead; //104
+        uint16_t back_collision_thr_ahead; //105
+        uint16_t front_wall_threshold_right; //106
+        uint16_t front_wall_threshold_left; //107
+        uint16_t front_wall_threshold_ahead; //108
+        uint16_t back_wall_threshold_right; //109
+        uint16_t back_wall_threshold_left; //110
+        uint16_t back_wall_threshold_ahead; //111
+        uint16_t front_wall_ctrl_threshold_right; //112
+        uint16_t front_wall_ctrl_threshold_left; //113
+        uint16_t back_wall_ctrl_threshold_right; //114
+        uint16_t back_wall_ctrl_threshold_left; //115
+        uint16_t front_wall_ctrl_threshold_delta_right; //116
+        uint16_t front_wall_ctrl_threshold_delta_left; //117
+        uint16_t front_wall_ctrl_add_val_right; //118
+        uint16_t front_wall_ctrl_add_val_left; //119
+        uint16_t back_wall_ctrl_threshold_delta_right; //120
+        uint16_t back_wall_ctrl_threshold_delta_left; //121
+        uint16_t back_wall_ctrl_add_val_right; //122
+        uint16_t back_wall_ctrl_add_val_left; //123
+        uint16_t HF_front_wall_center_r; //124
+        uint16_t HF_front_wall_center_l; //125
+        uint16_t HF_back_wall_center_r; //126
+        uint16_t HF_back_wall_center_l; //127
+        uint16_t HF_front_collision_thr_ahead; //128
+        uint16_t HF_back_collision_thr_ahead; //129
+        uint16_t HF_front_wall_threshold_right; //130
+        uint16_t HF_front_wall_threshold_left; //131
+        uint16_t HF_front_wall_threshold_ahead; //132
+        uint16_t HF_back_wall_threshold_right; //133
+        uint16_t HF_back_wall_threshold_left; //134
+        uint16_t HF_back_wall_threshold_ahead; //135
+        uint16_t HF_front_wall_ctrl_threshold_right; //136
+        uint16_t HF_front_wall_ctrl_threshold_left; //137
+        uint16_t HF_back_wall_ctrl_threshold_right; //138
+        uint16_t HF_back_wall_ctrl_threshold_left; //139
+        uint16_t HF_front_wall_ctrl_threshold_delta_right; //140
+        uint16_t HF_front_wall_ctrl_threshold_delta_left; //141
+        uint16_t HF_front_wall_ctrl_add_val_right; //142
+        uint16_t HF_front_wall_ctrl_add_val_left; //143
+        uint16_t HF_back_wall_ctrl_threshold_delta_right; //144
+        uint16_t HF_back_wall_ctrl_threshold_delta_left; //145
+        uint16_t HF_back_wall_ctrl_add_val_right; //146
+        uint16_t HF_back_wall_ctrl_add_val_left; //147
 
         int16_t gyro_x_ref; //150
         int16_t gyro_y_ref; //151
@@ -139,6 +164,19 @@ namespace robot_object{
         float duty_limit; //156
         uint8_t silent_flag; //157
         uint8_t send_data_mode; //158
+        float test_run_v; //159
+        float test_run_a; //160
+        float test_run_x; //161
+        uint8_t test_run_wall_flag; //162
+        float v_search_run; //163
+        float HF_v_search_run; //164
+        uint8_t goal_x; //165
+        uint8_t goal_y; //166
+        uint8_t half_flag; //167
+        float a_search_run; //168
+        float HF_a_search_run; //169
+        float pivot_ang_v; //170
+        float pivot_ang_a; //171
         //----管理下においた変数たち-----
 
 

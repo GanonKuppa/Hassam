@@ -18,7 +18,7 @@ namespace robot_object {
 class FrontWallSensor {
 
 private:
-    const uint8_t BUFF_SIZE = 5;
+    const uint8_t BUFF_SIZE = 30;
     bool enable;
 
     FrontWallSensor() {
@@ -192,44 +192,49 @@ public:
     bool isRight_for_ctrl() {
         ParameterManager &pm = ParameterManager::getInstance();
         int16_t d_RS = right.at(0) - right.at(1);
-        int16_t threshold_right;
-        if(pm.half_flag == 0) threshold_right = pm.front_wall_threshold_right;
-        else threshold_right = pm.HF_front_wall_threshold_right;
-
-        int16_t threshold_ctrl = threshold_right;
-        ////////右壁////////////////////////
-        if (ABS(d_RS) > 10)
-            threshold_ctrl += 450;
-
-
-        if (right.at(0) > threshold_ctrl && right.at(1) > threshold_ctrl &&
-            right.at(2) > threshold_ctrl && right.at(3) > threshold_ctrl &&
-            right.at(4) > threshold_ctrl) {
-            return true;
-        } else {
-            return false;
+        int16_t threshold;
+        int16_t threshold_delta;
+        int16_t threshold_add_val;
+        if(pm.half_flag == 0){
+            threshold = pm.front_wall_ctrl_threshold_right;
+            threshold_delta = pm.front_wall_ctrl_threshold_delta_right;
+            threshold_add_val = pm.front_wall_ctrl_add_val_right;
         }
+        else{
+            threshold = pm.HF_front_wall_ctrl_threshold_right;
+            threshold_delta = pm.HF_front_wall_ctrl_threshold_delta_right;
+            threshold_add_val = pm.HF_front_wall_ctrl_add_val_right;
+        }
+
+        int16_t threshold_ctrl = threshold;
+        if (ABS(d_RS) > threshold_delta) threshold_ctrl += threshold_add_val;
+        if (right.at(0) > threshold_ctrl ) return true;
+        else return false;
+
     }
 
     bool isLeft_for_ctrl() {
         ParameterManager &pm = ParameterManager::getInstance();
         int16_t d_LS = left.at(0) - left.at(1);
-        int16_t threshold_left;
+        int16_t threshold;
+        int16_t threshold_delta;
+        int16_t threshold_add_val;
 
-        if(pm.half_flag == 0)threshold_left = pm.front_wall_threshold_left;
-        else threshold_left = pm.HF_front_wall_threshold_left;
-        int16_t threshold_ctrl = threshold_left;
-        ////////右壁////////////////////////
-        if (ABS(d_LS) > 10)
-            threshold_ctrl += 450;
-
-        if (left.at(0) > threshold_ctrl && left.at(1) > threshold_ctrl &&
-            left.at(2) > threshold_ctrl && left.at(3) > threshold_ctrl &&
-            left.at(4) > threshold_ctrl) {
-            return true;
-        } else {
-            return false;
+        if(pm.half_flag == 0){
+            threshold = pm.front_wall_ctrl_threshold_left;
+            threshold_delta = pm.front_wall_ctrl_threshold_delta_left;
+            threshold_add_val = pm.front_wall_ctrl_add_val_left;
         }
+        else{
+            threshold = pm.HF_front_wall_ctrl_threshold_left;
+            threshold_delta = pm.HF_front_wall_ctrl_threshold_delta_left;
+            threshold_add_val = pm.HF_front_wall_ctrl_add_val_left;
+        }
+
+        int16_t threshold_ctrl = threshold;
+        if (ABS(d_LS) > threshold_delta) threshold_ctrl += threshold_add_val;
+        if (left.at(0) > threshold_ctrl ) return true;
+        else return false;
     }
 
 };
@@ -237,7 +242,7 @@ public:
 class BackWallSensor {
 
 private:
-    const uint8_t BUFF_SIZE = 5;
+    const uint8_t BUFF_SIZE = 30;
     bool enable;
 
     BackWallSensor() {
@@ -406,44 +411,48 @@ public:
         ParameterManager &pm = ParameterManager::getInstance();
         int16_t d_RS = right.at(0) - right.at(1);
         int16_t threshold_right;
-        if(pm.half_flag == 0)threshold_right = pm.back_wall_threshold_right;
-        else threshold_right = pm.back_wall_threshold_right;
-
+        int16_t threshold_delta;
+        int16_t threshold_add_val;
+        if(pm.half_flag == 0){
+            threshold_right = pm.back_wall_ctrl_threshold_right;
+            threshold_delta = pm.back_wall_ctrl_threshold_delta_right;
+            threshold_add_val = pm.back_wall_ctrl_add_val_right;
+        }
+        else{
+            threshold_right = pm.HF_back_wall_ctrl_threshold_right;
+            threshold_delta = pm.HF_back_wall_ctrl_threshold_delta_right;
+            threshold_add_val = pm.HF_back_wall_ctrl_add_val_right;
+        }
 
         int16_t threshold_ctrl = threshold_right;
-        ////////右壁////////////////////////
-        if (ABS(d_RS) > 10)
-            threshold_ctrl += 650;
+        if (ABS(d_RS) > threshold_delta) threshold_ctrl += threshold_add_val;
+        if (right.at(0) > threshold_ctrl ) return true;
+        else return false;
 
-        if (right.at(0) > threshold_ctrl && right.at(1) > threshold_ctrl &&
-            right.at(2) > threshold_ctrl && right.at(3) > threshold_ctrl &&
-            right.at(4) > threshold_ctrl) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     bool isLeft_for_ctrl() {
         ParameterManager &pm = ParameterManager::getInstance();
         int16_t d_LS = left.at(0) - left.at(1);
+        int16_t threshold;
+        int16_t threshold_delta;
+        int16_t threshold_add_val;
 
-        int16_t threshold_left;
-        if(pm.half_flag == 0)threshold_left = pm.back_wall_threshold_left;
-        else threshold_left = pm.back_wall_threshold_left;
-
-        int16_t threshold_ctrl = threshold_left;
-        ////////右壁////////////////////////
-        if (ABS(d_LS) > 10)
-            threshold_ctrl += 650;
-
-        if (left.at(0) > threshold_ctrl && left.at(1) > threshold_ctrl &&
-            left.at(2) > threshold_ctrl && left.at(3) > threshold_ctrl &&
-            left.at(4) > threshold_ctrl) {
-            return true;
-        } else {
-            return false;
+        if(pm.half_flag == 0){
+            threshold = pm.back_wall_ctrl_threshold_left;
+            threshold_delta = pm.back_wall_ctrl_threshold_delta_left;
+            threshold_add_val = pm.back_wall_ctrl_add_val_left;
         }
+        else{
+            threshold = pm.HF_back_wall_ctrl_threshold_left;
+            threshold_delta = pm.HF_back_wall_ctrl_threshold_delta_left;
+            threshold_add_val = pm.HF_back_wall_ctrl_add_val_left;
+        }
+
+        int16_t threshold_ctrl = threshold;
+        if (ABS(d_LS) > threshold_delta) threshold_ctrl += threshold_add_val;
+        if (left.at(0) > threshold_ctrl ) return true;
+        else return false;
     }
 
 };
@@ -451,7 +460,7 @@ public:
 class WallSensor {
 
 private:
-    const uint8_t BUFF_SIZE = 5;
+    const uint8_t BUFF_SIZE = 30;
     bool enable;
 
     WallSensor() {
@@ -584,10 +593,10 @@ public:
             pm.front_wall_center_l = front.left.at(0);
             pm.back_wall_center_r = back.right.at(0);
             pm.back_wall_center_l = back.left.at(0);
-            pm.write<uint16_t>(103, pm.front_wall_center_r);
-            pm.write<uint16_t>(104, pm.front_wall_center_l);
-            pm.write<uint16_t>(105, pm.back_wall_center_r);
-            pm.write<uint16_t>(106, pm.back_wall_center_l);
+            pm.write<uint16_t>(100, pm.front_wall_center_r);
+            pm.write<uint16_t>(101, pm.front_wall_center_l);
+            pm.write<uint16_t>(102, pm.back_wall_center_r);
+            pm.write<uint16_t>(103, pm.back_wall_center_l);
             printfAsync("----------\n");
             printfAsync("front l r: %d, %d\n",pm.front_wall_center_l, pm.front_wall_center_r);
             printfAsync("back  r l: %d, %d\n",pm.back_wall_center_r, pm.front_wall_center_l);
@@ -598,10 +607,10 @@ public:
             pm.HF_front_wall_center_l = front.left.at(0);
             pm.HF_back_wall_center_r = back.right.at(0);
             pm.HF_back_wall_center_l = back.left.at(0);
-            pm.write<uint16_t>(115, pm.HF_front_wall_center_r);
-            pm.write<uint16_t>(116, pm.HF_front_wall_center_l);
-            pm.write<uint16_t>(117, pm.HF_back_wall_center_r);
-            pm.write<uint16_t>(118, pm.HF_back_wall_center_l);
+            pm.write<uint16_t>(124, pm.HF_front_wall_center_r);
+            pm.write<uint16_t>(125, pm.HF_front_wall_center_l);
+            pm.write<uint16_t>(126, pm.HF_back_wall_center_r);
+            pm.write<uint16_t>(127, pm.HF_back_wall_center_l);
             printfAsync("----------\n");
             printfAsync("front l r: %d, %d\n",pm.HF_front_wall_center_l, pm.HF_front_wall_center_r);
             printfAsync("back  r l: %d, %d\n",pm.HF_back_wall_center_r, pm.HF_front_wall_center_l);

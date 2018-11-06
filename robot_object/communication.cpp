@@ -62,6 +62,7 @@ static uint8_t periodicMsg[PERIODIC_MSG_LEN];
 static void packDataMaze(uint8_t part_num, uint8_t *buf);
 static void packData(uint8_t *buf);
 static void packPidPrmAdjData(uint8_t *buf);
+static void packWallSenAdjData(uint8_t *buf);
 
 /***********同期printf関数******************/
 int printfSync(const char *fmt, ...) {
@@ -144,6 +145,7 @@ void sendPeriodicMsg() {
 
     if(pm.send_data_mode == 0) packData(periodicMsg);
     else if(pm.send_data_mode == 1) packPidPrmAdjData(periodicMsg);
+    else if(pm.send_data_mode == 2) packWallSenAdjData(periodicMsg);
     else packData(periodicMsg);
     peri::putnbyteSCIFA9(periodicMsg, PERIODIC_MSG_LEN);
 }
@@ -234,6 +236,74 @@ void packDataParamMng(uint8_t part_num, uint8_t *buf) {
     }
 }
 
+void packWallSenAdjData(uint8_t *buf){
+    uint8_t printfDataNum = 0;
+    const uint8_t printfFieldNum = 20;
+
+    UMouse &m = UMouse::getInstance();
+    FrontWallSensor &fws = FrontWallSensor::getInstance();
+    BackWallSensor &bws = BackWallSensor::getInstance();
+
+
+    //header
+    buf[0] = 0xff;
+    buf[1] = 0xff;
+    buf[2] = 0x48;
+    buf[3] = 0x45;
+    buf[4] = 0x41;
+    buf[5] = 0x44;
+    uint32_t elapsedTime = getElapsedMsec();
+    set4ByteVal(buf, 8, elapsedTime);
+
+    set2ByteVal(buf, 12, peri::getAD_AN102());
+
+    //パラメータマネージャのデータ
+    static uint8_t count_paramMng = 0;
+    packDataParamMng(count_paramMng, &buf[250]);
+    count_paramMng++;
+    if (count_paramMng == 20) count_paramMng = 0;
+
+    const uint8_t dataBuffNum = 30;
+    //壁センサ値1kHz
+    for (int i = 0; i < dataBuffNum; i++) {
+        set2ByteVal(buf, 16 + 2 * i, (int16_t) fws.left.at(i));
+        set2ByteVal(buf, 76 + 2 * i, (int16_t) fws.right.at(i));
+        set2ByteVal(buf, 136 + 2 * i, (int16_t) bws.left.at(i));
+        set2ByteVal(buf, 302 + 2 * i, (int16_t) bws.right.at(i));
+    }
+
+    //速度と角速度200Hz
+    for(int i= 0; i<6; i++){
+        set2ByteVal(buf, 196+ 2*i, (float)m.t_v_buff.at(i*5), 3000.0);
+        set2ByteVal(buf, 208+ 2*i, (float)m.v_buff.at(i*5), 3000.0);
+        set2ByteVal(buf, 220+ 2*i, (float)m.t_ang_v_buff.at(i*5), 20.0);
+        set2ByteVal(buf, 232+ 2*i, (float)m.ang_v_buff.at(i*5), 20.0);
+    }
+
+    //printf Data
+    uint16_t start_byte = PERIODIC_MSG_LEN - printfFieldNum;
+    uint16_t end_byte = PERIODIC_MSG_LEN;
+    for (int i = start_byte; i < end_byte; i++) {
+        if (printfBuff.empty() == false) {
+            buf[i] = printfBuff.front();
+            printfBuff.pop();
+            printfDataNum++;
+        }
+        else {
+            buf[i] = 0;
+        }
+    }
+    //printf Data Num
+    buf[7] = printfDataNum;
+
+    //check sum
+    uint8_t sum = 0;
+    for (int i = 7; i < PERIODIC_MSG_LEN; i++)
+        sum += buf[i];
+    buf[6] = sum;
+}
+
+
 void packPidPrmAdjData(uint8_t *buf){
     uint8_t printfDataNum = 0;
     const uint8_t printfFieldNum = 20;
@@ -261,10 +331,10 @@ void packPidPrmAdjData(uint8_t *buf){
     const uint8_t dataBuffNum = 30;
     //速度
     for(int i= 0; i<dataBuffNum; i++){
-        set2ByteVal(buf, 16, (float)m.t_v_buff.at(i), 10.0);
-        set2ByteVal(buf, 76, (float)m.t_v_buff.at(i), 10.0);
-        set2ByteVal(buf, 136, (float)m.t_ang_v_buff.at(i), 10.0);
-        set2ByteVal(buf, 302, (float)m.ang_v_buff.at(i), 10.0);
+        set2ByteVal(buf, 16+ 2*i, (float)m.t_v_buff.at(i), 3000.0);
+        set2ByteVal(buf, 76+ 2*i, (float)m.v_buff.at(i), 3000.0);
+        set2ByteVal(buf, 136+ 2*i, (float)m.t_ang_v_buff.at(i), 20.0);
+        set2ByteVal(buf, 302+ 2*i, (float)m.ang_v_buff.at(i), 20.0);
     }
 
 
